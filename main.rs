@@ -1,8 +1,11 @@
 use progress_bar::ProgressAmount;
+use std::io::timer;
+use std::time::duration::Duration;
 
 pub mod progress_bar {
 
   use std::io::process::{Command,ProcessOutput, ProcessExit};
+  use std::io::stdio;
 
   pub struct ProgressAmount(f32);
 
@@ -10,9 +13,15 @@ pub mod progress_bar {
     pub fn new(amount: f32, total: f32) -> ProgressAmount {
       if amount > total {
         return ProgressAmount(1f32)
+      } else if amount == 0.0f32 {
+        ProgressAmount(0.0)
       } else {
         ProgressAmount(amount / total)
       }
+    }
+
+    pub fn new_from_ints(amount: int, total: int) -> ProgressAmount {
+      ProgressAmount::new(amount as f32, total as f32)
     }
   }
 
@@ -27,14 +36,17 @@ pub mod progress_bar {
     };
     let bar_length = calc_bar_length(progress, term_width as f32);
     print!("|");
-    for _ in range(0, bar_length-1) {
-      print!("=");
+    if bar_length > 0 {
+      for _ in range(0, bar_length-1) {
+        print!("=");
+      }
+      print!(">");
     }
-    print!(">");
     for _ in range(0, term_width-bar_length) {
       print!(" ");
     }
     print!("|\r");
+    stdio::flush();
   }
 
   fn get_term_width() -> Option<u16> {
@@ -61,9 +73,12 @@ pub mod progress_bar {
   }
 }
 
-
-
 fn main() {
-  progress_bar::display_progress(ProgressAmount::new(30f32,100f32));
+  let total: int = 100;
+  for x in range::<int>(0, total+1) {
+    progress_bar::display_progress(ProgressAmount::new_from_ints(x, total));
+    timer::sleep(Duration::milliseconds(50));
+  }
+
   println!("");
 }
