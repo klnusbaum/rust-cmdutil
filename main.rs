@@ -1,13 +1,31 @@
+use progress_bar::ProgressAmount;
+
 pub mod progress_bar {
 
   use std::io::process::{Command,ProcessOutput, ProcessExit};
 
-  pub fn display_progress(progress: u16) -> () {
+  pub struct ProgressAmount(f32);
+
+  impl ProgressAmount {
+    pub fn new(amount: f32, total: f32) -> ProgressAmount {
+      if amount > total {
+        return ProgressAmount(1f32)
+      } else {
+        ProgressAmount(amount / total)
+      }
+    }
+  }
+
+  impl Copy for ProgressAmount {
+
+  }
+
+  pub fn display_progress(progress: ProgressAmount) -> () {
     let term_width = match get_term_width() {
       Some(a) => a,
       _ => 20
     };
-    let bar_length = calc_bar_length(progress as f32, term_width as f32);
+    let bar_length = calc_bar_length(progress, term_width as f32);
     print!("|");
     for _ in range(0, bar_length-1) {
       print!("=");
@@ -37,12 +55,15 @@ pub mod progress_bar {
     }
   }
 
-  fn calc_bar_length(progress: f32, term_width: f32) -> u16 {
-    ((progress / 100f32) * term_width) as u16
+  fn calc_bar_length(progress: ProgressAmount, term_width: f32) -> u16 {
+    let ProgressAmount(f32_progress) = progress;
+    (f32_progress * term_width) as u16
   }
 }
 
+
+
 fn main() {
-  progress_bar::display_progress(30);
+  progress_bar::display_progress(ProgressAmount::new(30f32,100f32));
   println!("");
 }
